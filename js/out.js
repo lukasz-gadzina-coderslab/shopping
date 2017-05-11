@@ -12911,14 +12911,26 @@ var _Cart = __webpack_require__(117);
 
 var _Cart2 = _interopRequireDefault(_Cart);
 
+var _Orders = __webpack_require__(263);
+
+var _Orders2 = _interopRequireDefault(_Orders);
+
+var _Order = __webpack_require__(264);
+
+var _Order2 = _interopRequireDefault(_Order);
+
+var _CartForm = __webpack_require__(266);
+
+var _CartForm2 = _interopRequireDefault(_CartForm);
+
 var _reactRouter = __webpack_require__(68);
 
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
-/**
- * Created by lukers on 08.05.17.
- */
-__webpack_require__(260);
+__webpack_require__(260); /**
+                               * Created by lukers on 08.05.17.
+                               */
+
 addEventListener('DOMContentLoaded', function () {
     _reactDom2.default.render(_react2.default.createElement(
         _reactRouter.Router,
@@ -12929,7 +12941,10 @@ addEventListener('DOMContentLoaded', function () {
             _react2.default.createElement(_reactRouter.IndexRoute, { component: _Main2.default }),
             _react2.default.createElement(_reactRouter.Route, { path: '/products', component: _Products2.default }),
             _react2.default.createElement(_reactRouter.Route, { path: '/product/:id', component: _Product2.default }),
-            _react2.default.createElement(_reactRouter.Route, { path: '/cart/:id', component: _Cart2.default })
+            _react2.default.createElement(_reactRouter.Route, { path: '/cart/:id', component: _Cart2.default }),
+            _react2.default.createElement(_reactRouter.Route, { path: '/orders', component: _Orders2.default }),
+            _react2.default.createElement(_reactRouter.Route, { path: '/order/:id', component: _Order2.default }),
+            _react2.default.createElement(_reactRouter.Route, { path: '/cart/:id/form', component: _CartForm2.default })
         )
     ), document.getElementById("app"));
 });
@@ -13426,6 +13441,8 @@ var _TableRows = __webpack_require__(72);
 
 var _TableRows2 = _interopRequireDefault(_TableRows);
 
+var _reactRouter = __webpack_require__(68);
+
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
 function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
@@ -13437,10 +13454,10 @@ function _inherits(subClass, superClass) { if (typeof superClass !== "function" 
 var Cart = function (_React$Component) {
     _inherits(Cart, _React$Component);
 
-    function Cart() {
+    function Cart(props) {
         _classCallCheck(this, Cart);
 
-        var _this = _possibleConstructorReturn(this, (Cart.__proto__ || Object.getPrototypeOf(Cart)).call(this));
+        var _this = _possibleConstructorReturn(this, (Cart.__proto__ || Object.getPrototypeOf(Cart)).call(this, props));
 
         _this.countAllElements = function () {
             var sum = 0;
@@ -13457,11 +13474,19 @@ var Cart = function (_React$Component) {
                 fetch(_config2.default.apiUrl + "/cart/delete/" + event.target.dataset.id).then(function (response) {
                     return response.json();
                 }).then(function (responseJson) {
-                    _this.setState({
-                        products: responseJson.items
-                    });
+                    if (responseJson.items.length === 0) {
+                        _this.hasData = false;
+                    } else {
+                        _this.setState({
+                            products: responseJson.items
+                        });
+                    }
                 });
             }
+        };
+
+        _this.handleOrderClick = function () {
+            _reactRouter.hashHistory.push('/cart/' + _this.props.params.id + '/form');
         };
 
         _this.state = {
@@ -13471,16 +13496,18 @@ var Cart = function (_React$Component) {
     }
 
     _createClass(Cart, [{
-        key: 'componentWillMount',
-        value: function componentWillMount() {
+        key: 'componentDidMount',
+        value: function componentDidMount() {
             var _this2 = this;
 
             this.hasData = true;
-            var arr = this.state.products;
             fetch(_config2.default.apiUrl + '/getCart/' + localStorage.getItem('cart')).then(function (response) {
                 return response.json();
             }).then(function (responseJson) {
-                arr.push(responseJson.items);
+                if (responseJson.items.length === 0) {
+
+                    _this2.hasData = false;
+                }
                 _this2.setState({
                     products: responseJson.items
                 });
@@ -13516,7 +13543,19 @@ var Cart = function (_React$Component) {
                                     quantity: element.quantity,
                                     handleRemoveClick: _this3.handleRemoveClick
                                 });
-                            }) : null
+                            }) : _react2.default.createElement(
+                                'tr',
+                                null,
+                                _react2.default.createElement(
+                                    'td',
+                                    null,
+                                    _react2.default.createElement(
+                                        'h2',
+                                        null,
+                                        'Your cart is empty :('
+                                    )
+                                )
+                            )
                         )
                     ),
                     _react2.default.createElement(
@@ -13527,7 +13566,14 @@ var Cart = function (_React$Component) {
                             null,
                             'Razem: ',
                             this.countAllElements()
-                        )
+                        ),
+                        _react2.default.createElement('br', null),
+                        this.state.products.length > 0 ? _react2.default.createElement(
+                            'button',
+                            { type: 'button', className: 'btn btn-success',
+                                onClick: this.handleOrderClick },
+                            'Checkout :D'
+                        ) : null
                     )
                 )
             );
@@ -13995,8 +14041,43 @@ var Products = function (_React$Component) {
 
         var _this = _possibleConstructorReturn(this, (Products.__proto__ || Object.getPrototypeOf(Products)).call(this));
 
+        _this.handleToFindChange = function (event) {
+            _this.setState({
+                toFind: event.target.value
+            });
+        };
+
+        _this.handleFormSubmit = function (event) {
+            event.preventDefault();
+            _this.search = true;
+            fetch(_config2.default.apiUrl + '/product/find/' + _this.state.toFind).then(function (response) {
+                return response.json();
+            }).then(function (responseJson) {
+                _this.setState({
+                    products: responseJson.products
+                }, function () {
+                    _this.search = false;
+                });
+            });
+        };
+
+        _this.renderRows = function () {
+            return _this.state.products.map(function (element) {
+                return _react2.default.createElement(_TableRows2.default, {
+                    key: element.id,
+                    id: element.id,
+                    name: element.name,
+                    price: element.price,
+                    available: element.available,
+                    photo: element.product_images[0].url,
+                    description: element.description
+                });
+            });
+        };
+
         _this.state = {
-            products: []
+            products: [],
+            toFind: ""
         };
         return _this;
     }
@@ -14026,23 +14107,34 @@ var Products = function (_React$Component) {
                     'div',
                     { className: 'col-md-12 col-sm-12' },
                     _react2.default.createElement(
+                        'form',
+                        { onSubmit: this.handleFormSubmit },
+                        _react2.default.createElement(
+                            'div',
+                            { className: 'input-group' },
+                            _react2.default.createElement('input', { type: 'text',
+                                className: 'form-control',
+                                onChange: this.handleToFindChange,
+                                placeholder: 'Search for...' }),
+                            _react2.default.createElement(
+                                'span',
+                                { className: 'input-group-btn' },
+                                _react2.default.createElement(
+                                    'button',
+                                    { className: 'btn btn-secondary', type: 'submit' },
+                                    'Go!'
+                                )
+                            )
+                        )
+                    ),
+                    _react2.default.createElement(
                         'table',
                         {
                             className: 'table table-bordered table-hovered' },
                         _react2.default.createElement(
                             'tbody',
                             null,
-                            this.state.products.map(function (element) {
-                                return _react2.default.createElement(_TableRows2.default, {
-                                    key: element.id,
-                                    id: element.id,
-                                    name: element.name,
-                                    price: element.price,
-                                    available: element.available,
-                                    photo: element.product_images[0].url,
-                                    description: element.description
-                                });
-                            })
+                            this.search ? null : this.renderRows()
                         )
                     )
                 )
@@ -14226,7 +14318,7 @@ exports = module.exports = __webpack_require__(126)(undefined);
 
 
 // module
-exports.push([module.i, ".mini-photo {\n  width: 100px;\n  height: 100px; }\n\n.price {\n  color: gray; }\n\n.name {\n  font-weight: 900; }\n\n.available {\n  color: green; }\n\n.unavailable {\n  color: red; }\n\n@media (min-width: 961px) {\n  .name {\n    font-size: 24px; }\n  .show-product-button,\n  .delete-product-button {\n    float: right;\n    margin: -5% 0 0 0; }\n  .price {\n    margin-left: 10px; }\n  .available,\n  .unavailable {\n    margin-left: 10px; } }\n\n.product-images li {\n  list-style: none;\n  display: inline-block;\n  margin-left: 20px; }\n  .product-images li img {\n    width: 100px;\n    height: 100px; }\n\n.product-info {\n  float: right; }\n  .product-info hr {\n    border: 2px solid black; }\n  .product-info .title h2, .product-info .title span {\n    display: inline-block; }\n  .product-info .title span {\n    color: gray;\n    margin-left: 10px; }\n  .product-info .add-to-cart input {\n    width: 60px; }\n  .product-info .add-to-cart button {\n    margin-top: 20px; }\n", ""]);
+exports.push([module.i, ".mini-photo {\n  width: 100px;\n  height: 100px; }\n\n.price {\n  color: gray; }\n\n.name {\n  font-weight: 900; }\n\n.available {\n  color: green; }\n\n.unavailable {\n  color: red; }\n\n@media (min-width: 961px) {\n  .name {\n    font-size: 24px; }\n  .show-product-button,\n  .delete-product-button {\n    float: right;\n    margin: -5% 0 0 0; }\n  .price {\n    margin-left: 10px; }\n  .available,\n  .unavailable {\n    margin-left: 10px; } }\n\n.product-images li {\n  list-style: none;\n  display: inline-block;\n  margin-left: 20px; }\n  .product-images li img {\n    width: 100px;\n    height: 100px; }\n\n.product-info {\n  float: right; }\n  .product-info hr {\n    border: 2px solid black; }\n  .product-info .title h2, .product-info .title span {\n    display: inline-block; }\n  .product-info .title span {\n    color: gray;\n    margin-left: 10px; }\n  .product-info .add-to-cart input {\n    width: 60px; }\n  .product-info .add-to-cart button {\n    margin-top: 20px; }\n\ntextarea {\n  resize: vertical; }\n", ""]);
 
 // exports
 
@@ -29727,6 +29819,552 @@ module.exports = warning;
 __webpack_require__(116);
 module.exports = __webpack_require__(115);
 
+
+/***/ }),
+/* 263 */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+
+
+Object.defineProperty(exports, "__esModule", {
+    value: true
+});
+
+var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
+
+var _react = __webpack_require__(4);
+
+var _react2 = _interopRequireDefault(_react);
+
+var _config = __webpack_require__(34);
+
+var _config2 = _interopRequireDefault(_config);
+
+var _reactRouter = __webpack_require__(68);
+
+function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
+
+function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
+
+function _possibleConstructorReturn(self, call) { if (!self) { throw new ReferenceError("this hasn't been initialised - super() hasn't been called"); } return call && (typeof call === "object" || typeof call === "function") ? call : self; }
+
+function _inherits(subClass, superClass) { if (typeof superClass !== "function" && superClass !== null) { throw new TypeError("Super expression must either be null or a function, not " + typeof superClass); } subClass.prototype = Object.create(superClass && superClass.prototype, { constructor: { value: subClass, enumerable: false, writable: true, configurable: true } }); if (superClass) Object.setPrototypeOf ? Object.setPrototypeOf(subClass, superClass) : subClass.__proto__ = superClass; }
+
+var Orders = function (_React$Component) {
+    _inherits(Orders, _React$Component);
+
+    function Orders() {
+        _classCallCheck(this, Orders);
+
+        var _this = _possibleConstructorReturn(this, (Orders.__proto__ || Object.getPrototypeOf(Orders)).call(this));
+
+        _this.state = {
+            orders: []
+        };
+        return _this;
+    }
+
+    _createClass(Orders, [{
+        key: 'componentDidMount',
+        value: function componentDidMount() {
+            var _this2 = this;
+
+            fetch(_config2.default.apiUrl + "/orders").then(function (response) {
+                return response.json();
+            }).then(function (responseJson) {
+                _this2.setState({
+                    orders: responseJson.orders
+                });
+            });
+        }
+    }, {
+        key: 'render',
+        value: function render() {
+            return _react2.default.createElement(
+                'div',
+                { className: 'row' },
+                _react2.default.createElement(
+                    'div',
+                    { className: 'col-md-12 col-sm-12' },
+                    _react2.default.createElement(
+                        'table',
+                        { className: 'table table-border' },
+                        this.state.orders.map(function (element) {
+                            return _react2.default.createElement(
+                                'tr',
+                                { key: element.id },
+                                _react2.default.createElement(
+                                    'td',
+                                    null,
+                                    _react2.default.createElement(
+                                        _reactRouter.Link,
+                                        { to: "/order/" + element.id },
+                                        element.number
+                                    )
+                                )
+                            );
+                        })
+                    )
+                )
+            );
+        }
+    }]);
+
+    return Orders;
+}(_react2.default.Component);
+
+exports.default = Orders;
+
+/***/ }),
+/* 264 */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+
+
+Object.defineProperty(exports, "__esModule", {
+    value: true
+});
+
+var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
+
+var _react = __webpack_require__(4);
+
+var _react2 = _interopRequireDefault(_react);
+
+var _config = __webpack_require__(34);
+
+var _config2 = _interopRequireDefault(_config);
+
+function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
+
+function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
+
+function _possibleConstructorReturn(self, call) { if (!self) { throw new ReferenceError("this hasn't been initialised - super() hasn't been called"); } return call && (typeof call === "object" || typeof call === "function") ? call : self; }
+
+function _inherits(subClass, superClass) { if (typeof superClass !== "function" && superClass !== null) { throw new TypeError("Super expression must either be null or a function, not " + typeof superClass); } subClass.prototype = Object.create(superClass && superClass.prototype, { constructor: { value: subClass, enumerable: false, writable: true, configurable: true } }); if (superClass) Object.setPrototypeOf ? Object.setPrototypeOf(subClass, superClass) : subClass.__proto__ = superClass; }
+
+var Order = function (_React$Component) {
+    _inherits(Order, _React$Component);
+
+    function Order(props) {
+        _classCallCheck(this, Order);
+
+        var _this = _possibleConstructorReturn(this, (Order.__proto__ || Object.getPrototypeOf(Order)).call(this, props));
+
+        _this.state = {
+            order: {}
+        };
+        return _this;
+    }
+
+    _createClass(Order, [{
+        key: 'componentDidMount',
+        value: function componentDidMount() {
+            fetch(_config2.default.apiUrl + "/order/" + this.props.params.id).then(function (response) {
+                return response.json();
+            }).then(function (responseJson) {
+                console.log(responseJson);
+            });
+        }
+    }, {
+        key: 'render',
+        value: function render() {
+            return _react2.default.createElement(
+                'div',
+                { className: 'row' },
+                _react2.default.createElement('div', { className: 'col-md-12 col-sm-12' })
+            );
+        }
+    }]);
+
+    return Order;
+}(_react2.default.Component);
+
+exports.default = Order;
+
+/***/ }),
+/* 265 */,
+/* 266 */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+
+
+Object.defineProperty(exports, "__esModule", {
+    value: true
+});
+
+var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
+
+var _react = __webpack_require__(4);
+
+var _react2 = _interopRequireDefault(_react);
+
+var _config = __webpack_require__(34);
+
+var _config2 = _interopRequireDefault(_config);
+
+var _AdditionalCartForm = __webpack_require__(267);
+
+var _AdditionalCartForm2 = _interopRequireDefault(_AdditionalCartForm);
+
+var _reactRouter = __webpack_require__(68);
+
+function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
+
+function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
+
+function _possibleConstructorReturn(self, call) { if (!self) { throw new ReferenceError("this hasn't been initialised - super() hasn't been called"); } return call && (typeof call === "object" || typeof call === "function") ? call : self; }
+
+function _inherits(subClass, superClass) { if (typeof superClass !== "function" && superClass !== null) { throw new TypeError("Super expression must either be null or a function, not " + typeof superClass); } subClass.prototype = Object.create(superClass && superClass.prototype, { constructor: { value: subClass, enumerable: false, writable: true, configurable: true } }); if (superClass) Object.setPrototypeOf ? Object.setPrototypeOf(subClass, superClass) : subClass.__proto__ = superClass; }
+
+var CartForm = function (_React$Component) {
+    _inherits(CartForm, _React$Component);
+
+    function CartForm(props) {
+        _classCallCheck(this, CartForm);
+
+        var _this = _possibleConstructorReturn(this, (CartForm.__proto__ || Object.getPrototypeOf(CartForm)).call(this, props));
+
+        _this.handleNameChange = function (event) {
+            _this.setState({
+                name: event.target.value
+            });
+        };
+
+        _this.handleSurmameChange = function (event) {
+            _this.setState({
+                surname: event.target.value
+            });
+        };
+
+        _this.handleStreetChange = function (event) {
+            _this.setState({
+                street: event.target.value
+            });
+        };
+
+        _this.handleLocalChange = function (event) {
+            _this.setState({
+                local: event.target.value
+            });
+        };
+
+        _this.handlePostcodeChange = function (event) {
+            _this.setState({
+                postcode: event.target.value
+            });
+        };
+
+        _this.handleCityChange = function (event) {
+            _this.setState({
+                city: event.target.value
+            });
+        };
+
+        _this.handlePaymentChange = function (event) {
+            _this.setState({
+                payment: event.target.value
+            });
+        };
+
+        _this.handleInvoiceChange = function (event) {
+            _this.setState({
+                invoice: event.target.checked
+            });
+        };
+
+        _this.handleNipChange = function (event) {
+            _this.setState({
+                nip: event.target.value
+            });
+        };
+
+        _this.handleCompanyNameChange = function (event) {
+            _this.setState({
+                companyName: event.target.value
+            });
+        };
+
+        _this.handleExtraInfoChange = function (event) {
+            _this.setState({
+                extraInfo: event.target.value
+            });
+        };
+
+        _this.handleFormSubmit = function (event) {
+            event.preventDefault();
+            fetch(_config2.default.apiUrl + "/createOrderFromCart", {
+                method: "POST",
+                body: JSON.stringify({
+                    cartId: _this.props.params.id
+                })
+            }).then(function (response) {
+                return response.json();
+            }).then(function (responseJson) {
+                _this.setState({
+                    sent: true
+                });
+                localStorage.setItem('cart', responseJson['cartId']);
+
+                var inter = setInterval(function () {
+                    _this.setState({
+                        timeToRedirect: _this.state.timeToRedirect - 1
+                    }, function () {
+                        if (_this.state.timeToRedirect === 0) {
+                            clearInterval(inter);
+                            _reactRouter.hashHistory.push('/');
+                        }
+                    });
+                }, 1000);
+            });
+        };
+
+        _this.state = {
+            name: '',
+            surname: '',
+            street: '',
+            local: '',
+            postcode: '',
+            city: '',
+            payment: '',
+            paymentMethods: ['card', 'transfer'],
+            invoice: false,
+            nip: '',
+            companyName: '',
+            extraInfo: '',
+            sent: false,
+            timeToRedirect: 5
+        };
+        return _this;
+    }
+
+    _createClass(CartForm, [{
+        key: 'render',
+        value: function render() {
+            if (this.state.sent) {
+                return _react2.default.createElement(
+                    'div',
+                    { className: 'row text-center' },
+                    _react2.default.createElement(
+                        'h1',
+                        null,
+                        'Thank you for your order :)'
+                    ),
+                    _react2.default.createElement(
+                        'p',
+                        null,
+                        'You will be redirect in ',
+                        this.state.timeToRedirect
+                    )
+                );
+            }
+            return _react2.default.createElement(
+                'div',
+                { className: 'row' },
+                _react2.default.createElement(
+                    'div',
+                    { className: 'col-md-12 col-sm-12' },
+                    _react2.default.createElement(
+                        'div',
+                        { className: 'col-md-12 form-group text-center' },
+                        _react2.default.createElement(
+                            'h2',
+                            null,
+                            'Insert data for shipment'
+                        )
+                    ),
+                    _react2.default.createElement(
+                        'form',
+                        { onSubmit: this.handleFormSubmit },
+                        _react2.default.createElement(
+                            'div',
+                            { className: 'col-md-6' },
+                            _react2.default.createElement(
+                                'div',
+                                { className: 'col-md-12 form-group' },
+                                _react2.default.createElement('input', {
+                                    type: 'text',
+                                    placeholder: 'name',
+                                    className: 'form-control',
+                                    onChange: this.handleNameChange })
+                            ),
+                            _react2.default.createElement(
+                                'div',
+                                { className: 'col-md-12 form-group' },
+                                _react2.default.createElement('input', {
+                                    type: 'text',
+                                    placeholder: 'street',
+                                    className: 'form-control',
+                                    onChange: this.handleStreetChange })
+                            ),
+                            _react2.default.createElement(
+                                'div',
+                                { className: 'col-md-12 form-group' },
+                                _react2.default.createElement('input', {
+                                    type: 'text',
+                                    placeholder: 'postcode',
+                                    className: 'form-control',
+                                    onChange: this.handlePostcodeChange })
+                            ),
+                            _react2.default.createElement(
+                                'div',
+                                { className: 'col-md-12 form-group' },
+                                _react2.default.createElement(
+                                    'select',
+                                    {
+                                        className: 'form-control',
+                                        onChange: this.handlePaymentChange },
+                                    this.state.paymentMethods.map(function (element, index) {
+                                        return _react2.default.createElement(
+                                            'option',
+                                            { key: index },
+                                            element
+                                        );
+                                    })
+                                )
+                            ),
+                            this.state.invoice ? _react2.default.createElement(_AdditionalCartForm2.default, {
+                                handleNipChange: this.handleNipChange,
+                                handleComapnyNameChange: this.handleCompanyNameChange }) : null
+                        ),
+                        _react2.default.createElement(
+                            'div',
+                            { className: 'col-md-6' },
+                            _react2.default.createElement(
+                                'div',
+                                { className: 'col-md-12 form-group' },
+                                _react2.default.createElement('input', {
+                                    type: 'text',
+                                    placeholder: 'surname',
+                                    className: 'form-control',
+                                    onChange: this.handleSurmameChange })
+                            ),
+                            _react2.default.createElement(
+                                'div',
+                                { className: 'col-md-12 form-group' },
+                                _react2.default.createElement('input', {
+                                    type: 'text',
+                                    placeholder: 'number/local',
+                                    className: 'form-control',
+                                    onChange: this.handleLocalChange })
+                            ),
+                            _react2.default.createElement(
+                                'div',
+                                { className: 'col-md-12 form-group' },
+                                _react2.default.createElement('input', {
+                                    type: 'text',
+                                    placeholder: 'city',
+                                    className: 'form-control',
+                                    onChange: this.handleCityChange })
+                            ),
+                            _react2.default.createElement(
+                                'div',
+                                { className: 'col-md-12 form-group' },
+                                _react2.default.createElement('input', {
+                                    type: 'checkbox',
+                                    onChange: this.handleInvoiceChange }),
+                                ' Invoice'
+                            ),
+                            _react2.default.createElement(
+                                'div',
+                                { className: 'col-md-12 form-group' },
+                                _react2.default.createElement('textarea', {
+                                    placeholder: 'info',
+                                    className: 'form-control',
+                                    onChange: this.handleExtraInfoChange })
+                            ),
+                            _react2.default.createElement(
+                                'div',
+                                { className: 'col-md-12' },
+                                _react2.default.createElement(
+                                    'button',
+                                    {
+                                        type: 'submit',
+                                        className: 'btn btn-warning pull-right' },
+                                    'Confirm'
+                                )
+                            )
+                        )
+                    )
+                )
+            );
+        }
+    }]);
+
+    return CartForm;
+}(_react2.default.Component);
+
+exports.default = CartForm;
+
+/***/ }),
+/* 267 */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+
+
+Object.defineProperty(exports, "__esModule", {
+    value: true
+});
+
+var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
+
+var _react = __webpack_require__(4);
+
+var _react2 = _interopRequireDefault(_react);
+
+function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
+
+function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
+
+function _possibleConstructorReturn(self, call) { if (!self) { throw new ReferenceError("this hasn't been initialised - super() hasn't been called"); } return call && (typeof call === "object" || typeof call === "function") ? call : self; }
+
+function _inherits(subClass, superClass) { if (typeof superClass !== "function" && superClass !== null) { throw new TypeError("Super expression must either be null or a function, not " + typeof superClass); } subClass.prototype = Object.create(superClass && superClass.prototype, { constructor: { value: subClass, enumerable: false, writable: true, configurable: true } }); if (superClass) Object.setPrototypeOf ? Object.setPrototypeOf(subClass, superClass) : subClass.__proto__ = superClass; }
+
+var AdditionalCartForm = function (_React$Component) {
+    _inherits(AdditionalCartForm, _React$Component);
+
+    function AdditionalCartForm() {
+        _classCallCheck(this, AdditionalCartForm);
+
+        return _possibleConstructorReturn(this, (AdditionalCartForm.__proto__ || Object.getPrototypeOf(AdditionalCartForm)).apply(this, arguments));
+    }
+
+    _createClass(AdditionalCartForm, [{
+        key: "render",
+        value: function render() {
+            return _react2.default.createElement(
+                "div",
+                null,
+                _react2.default.createElement(
+                    "div",
+                    { className: "col-md-12 form-group" },
+                    _react2.default.createElement("input", {
+                        type: "text",
+                        placeholder: "nip",
+                        className: "form-control",
+                        onChange: this.props.handleNipChange })
+                ),
+                _react2.default.createElement(
+                    "div",
+                    { className: "col-md-12 form-group" },
+                    _react2.default.createElement("input", {
+                        type: "text",
+                        className: "form-control",
+                        placeholder: "company name",
+                        onChange: this.props.handleCompanyNameChange })
+                )
+            );
+        }
+    }]);
+
+    return AdditionalCartForm;
+}(_react2.default.Component);
+
+exports.default = AdditionalCartForm;
 
 /***/ })
 /******/ ]);

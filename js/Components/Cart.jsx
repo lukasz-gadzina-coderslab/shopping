@@ -1,29 +1,31 @@
 import React from 'react'
 import config from '../config.js'
 import TableRows from './Libraries/TableRows.jsx'
-
+import { hashHistory } from 'react-router'
 
 class Cart extends React.Component {
-    constructor() {
-        super()
+    constructor(props) {
+        super(props)
         this.state = {
             products: []
         }
     }
 
-    componentWillMount() {
+    componentDidMount() {
         this.hasData = true
-        let arr = this.state.products
         fetch(config.apiUrl + '/getCart/' + localStorage.getItem('cart'))
             .then(response => response.json())
             .then(responseJson => {
-                arr.push(responseJson.items)
+                if(responseJson.items.length === 0) {
+
+                    this.hasData = false
+                }
                 this.setState({
                     products: responseJson.items
                 })
             })
     }
-    
+
     countAllElements = () => {
         let sum = 0
         
@@ -39,12 +41,20 @@ class Cart extends React.Component {
             fetch(config.apiUrl + "/cart/delete/" + event.target.dataset.id)
                 .then(response => response.json())
                 .then(responseJson => {
-                    this.setState({
-                        products: responseJson.items
-                    })
+                    if (responseJson.items.length === 0) {
+                        this.hasData = false
+                    } else {
+                        this.setState({
+                            products: responseJson.items
+                        })
+                    }
                 })
         }
 
+    }
+
+    handleOrderClick = () => {
+        hashHistory.push('/cart/' + this.props.params.id + '/form')
     }
 
     render() {
@@ -66,14 +76,20 @@ class Cart extends React.Component {
                                             quantity={element.quantity}
                                             handleRemoveClick={this.handleRemoveClick}
                                             />
-                            }) : null
+                            }) : <tr><td><h2>Your cart is empty :(</h2></td></tr>
                     }
                     </tbody>
                 </table>
                 <div className="pull-right">
                     <b>Razem: {
                         this.countAllElements()
-                    }</b>
+                    }</b><br/>
+                    {
+                        this.state.products.length > 0 ? <button type="button" className="btn btn-success"
+                                             onClick={this.handleOrderClick}>
+                                Checkout :D
+                            </button> : null
+                    }
                 </div>
             </div>
         </div>
