@@ -1,6 +1,6 @@
 import React from 'react'
 import config from '../config.js'
-import TableRows from './TableRows.jsx'
+import TableRows from './Libraries/TableRows.jsx'
 
 class Products extends React.Component {
     constructor() {

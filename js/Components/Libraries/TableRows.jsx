@@ -20,16 +20,23 @@ class TableRows extends React.Component {
                         <span className='unavailable'>Niedostępny</span>
                     }
                 </span>
-                <span className='amount'>
-                    {this.props.amount}
-                </span>
                 <p className='description'>
                     {this.props.description.substr(0, 30) + '...'}
                 </p>
-                <Link to={'/product/' + this.props.id}
-                      className='btn btn-info show-product-button'>
-                    Show
-                </Link>
+
+                {
+                    this.props.del ? <button className="btn btn-danger delete-product-button" data-id={this.props.id}
+                            onClick={this.props.handleRemoveClick}>Usuń</button> :
+                            <Link to={'/product/' + this.props.id} className='btn btn-info show-product-button'>
+                                Show
+                            </Link>
+                }
+                {
+                    this.props.quantity ? <span className="quantity"><h2>Ilość: {this.props.quantity}</h2></span> : null
+                }
+                {
+                    this.props.amount ? <span className="amount">Łącznie: {this.props.amount }</span> : null
+                }
             </td>
         </tr>
     }

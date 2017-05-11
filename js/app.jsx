@@ -6,6 +6,8 @@ import ReactDOM from 'react-dom'
 import Template from './Components/Template.jsx'
 import Main from './Components/Main.jsx'
 import Products from './Components/Products.jsx'
+import Product from './Components/Product.jsx'
+import Cart from './Components/Cart.jsx'
 
 import {Route, Router, IndexRoute, hashHistory} from 'react-router'
 
@@ -16,8 +18,8 @@ addEventListener('DOMContentLoaded', function() {
             <Route path='/' component={Template}>
                 <IndexRoute component={Main} />
                 <Route path='/products' component={Products} />
-                {/*<Route path='/product/:id' component={Product} />*/}
-                {/*<Route path='/cart/:id' component={Cart} />*/}
+                <Route path='/product/:id' component={Product} />
+                <Route path='/cart/:id' component={Cart} />
                 {/*<Route path='/orders' component={Orders} />*/}
                 {/*<Route path='/order/:id' component={Order} />*/}
                 {/*<Route path='/contact' component={Contact} />*/}

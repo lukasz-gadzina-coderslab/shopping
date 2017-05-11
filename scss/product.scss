@@ -1,0 +1,35 @@
+.product-images {
+  li {
+    list-style: none;
+    display: inline-block;
+    margin-left: 20px;
+    img {
+      width: 100px;
+      height: 100px;
+    }
+  }
+}
+
+.product-info {
+  float: right;
+  hr {
+    border: 2px solid black
+  }
+  .title {
+    h2, span {
+      display: inline-block;
+    }
+    span {
+      color: gray;
+      margin-left: 10px;
+    }
+  }
+  .add-to-cart {
+    input {
+      width: 60px;
+    }
+    button {
+      margin-top: 20px;
+    }
+  }
+}
